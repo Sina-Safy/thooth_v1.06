@@ -1,0 +1,1672 @@
+﻿<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tooth Shade Web</title>
+  <script src="https://unpkg.com/konva@9/konva.min.js">
+/* === TRACKPAD-TUNE-TUNE1 (DO NOT REMOVE) === */
+</script>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#0b1630;
+      --panel: rgba(255,255,255,.04);
+      --panel2: rgba(255,255,255,.05);
+      --border: rgba(64,88,140,.40);
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --blue:#60a5fa;
+      --green:#22c55e;
+      --green2:#34d399;
+      --warn:#f59e0b;
+      --navy:#0b1f3a;
+      --dgreen:#0b3a1f;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:16px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--text);
+    }
+
+    .top{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background: var(--panel);
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+
+    .toolbar{
+      padding:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      min-width:min(980px, 100%);
+    }
+
+    .title{
+      font-weight:900;
+      letter-spacing:.2px;
+      margin:0 0 10px 0;
+      font-size:18px;
+    }
+
+    .select, input[type="file"], .num{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:800;
+      outline:none;
+    }
+
+    .num{ width:92px; text-align:center; padding:10px 10px; }
+
+    .btn{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+      letter-spacing:.2px;
+      user-select:none;
+      transition: transform .06s ease, background .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover{ background: rgba(255,255,255,.06); }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.active{
+      border-color: rgba(96,165,250,.85);
+      background: rgba(96,165,250,.16);
+      box-shadow: 0 0 0 4px rgba(96,165,250,.10);
+    }
+
+    .btn.analyze{
+      margin-left:auto;
+      border-color: rgba(52,211,153,.55);
+      background: linear-gradient(180deg, rgba(52,211,153,.26), rgba(34,197,94,.14));
+      box-shadow: 0 12px 28px rgba(34,197,94,.12);
+    }
+    .btn.analyze:hover{
+      background: linear-gradient(180deg, rgba(52,211,153,.32), rgba(34,197,94,.18));
+      box-shadow: 0 14px 32px rgba(34,197,94,.18);
+    }
+
+    .btn.small{ padding:10px 10px; }
+    .btn.plus{ width:44px; text-align:center; padding:10px 0; font-size:18px; line-height:18px; }
+
+    .chips{
+      padding:10px 12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .chip{
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-weight:900;
+      font-size:13px;
+    }
+    .chip.info{
+      color:#bfdbfe;
+      border-color: rgba(96,165,250,.35);
+      background: rgba(96,165,250,.08);
+    }
+    .chip.good{
+      color:#bbf7d0;
+      border-color: rgba(34,197,94,.35);
+      background: rgba(34,197,94,.08);
+    }
+    .chip.warn{
+      color:#fde68a;
+      border-color: rgba(245,158,11,.35);
+      background: rgba(245,158,11,.08);
+    }
+    .spacer{ flex:1; }
+
+    .stageWrap{
+      margin-top:12px;
+      width:100%;
+      height:640px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      background:#050814;
+      touch-action:none;
+      cursor: crosshair;
+    }
+
+    .results{
+      width:min(980px, 100%);
+      padding:12px;
+    }
+
+    .resultsHeader{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .resultsHeader h3{ margin:0; font-size:16px; font-weight:950; }
+    .subtle{ color: var(--muted); font-weight:900; font-size:13px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:10px;
+    }
+    .rcard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: var(--panel2);
+      padding:12px;
+      grid-column: span 6;
+    }
+    .rcard.full{ grid-column: span 12; }
+
+    .rcardTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+      font-weight:950;
+    }
+    .tag{
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-weight:950;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .labRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .pill{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:950;
+      min-width: 92px;
+      text-align:center;
+    }
+    .pill small{
+      display:block;
+      color: var(--muted);
+      font-weight:900;
+      font-size:11px;
+      margin-bottom:2px;
+    }
+
+    @media(max-width: 900px){
+      .toolbar{ min-width:100%; }
+      .rcard{ grid-column: span 12; }
+      .num{ width:84px; }
+      .btn.analyze{ margin-left:0; }
+    }
+  
+/* === UI-UPGRADE-PS2 (DO NOT REMOVE) === */
+
+/* ===== Button visual upgrades ===== */
+.btn.fit{
+  border-color: rgba(245, 158, 11, .55);
+  background: linear-gradient(180deg, rgba(245, 158, 11, .22), rgba(245, 158, 11, .10));
+  box-shadow: 0 12px 28px rgba(245, 158, 11, .14);
+}
+.btn.fit:hover{
+  background: linear-gradient(180deg, rgba(245, 158, 11, .28), rgba(245, 158, 11, .14));
+  box-shadow: 0 14px 32px rgba(245, 158, 11, .18);
+}
+
+.btn.clear{
+  border-color: rgba(96, 165, 250, .55);
+  background: linear-gradient(180deg, rgba(96, 165, 250, .22), rgba(96, 165, 250, .10));
+  box-shadow: 0 12px 28px rgba(96, 165, 250, .14);
+}
+.btn.clear:hover{
+  background: linear-gradient(180deg, rgba(96, 165, 250, .28), rgba(96, 165, 250, .14));
+  box-shadow: 0 14px 32px rgba(96, 165, 250, .18);
+}
+
+/* ===== Make LAB pills more visible ===== */
+.pill{
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.07);
+  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+  font-weight: 1000;
+  letter-spacing: .2px;
+}
+.pill small{
+  color: rgba(229,231,235,.95);
+}
+.pill{
+  color: rgba(255,255,255,.96);
+}
+
+
+/* === UI-UPGRADE-PS3 (DO NOT REMOVE) === */
+
+/* ===== PAN button style ===== */
+.btn.pan{
+  border-color: rgba(34,211,238,.55);
+  background: linear-gradient(180deg, rgba(34,211,238,.20), rgba(34,211,238,.08));
+  box-shadow: 0 12px 28px rgba(34,211,238,.14);
+}
+.btn.pan:hover{
+  background: linear-gradient(180deg, rgba(34,211,238,.26), rgba(34,211,238,.12));
+  box-shadow: 0 14px 32px rgba(34,211,238,.18);
+}
+
+/* ===== LAB pills: brighter & more readable (force override) ===== */
+.pill{
+  border-color: rgba(255,255,255,.32) !important;
+  background: rgba(255,255,255,.12) !important;
+  color: rgba(255,255,255,.98) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,.28) !important;
+}
+.pill small{
+  color: rgba(255,255,255,.88) !important;
+}
+
+
+/* === UI-UPGRADE-PS4 (DO NOT REMOVE) === */
+
+/* ===== Calibrated (Stage4) LAB highlight ===== */
+.labRow.cal .pill{
+  border-color: rgba(34,197,94,.55) !important;
+  background: linear-gradient(180deg, rgba(34,197,94,.18), rgba(16,185,129,.10)) !important;
+  box-shadow: 0 14px 34px rgba(16,185,129,.16) !important;
+}
+
+
+/* === MODE-UI-UPGRADE (DO NOT REMOVE) === */
+/* Make Mode selector bigger & visually distinct */
+#mode.select{
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 900;
+  border-color: rgba(168,85,247,.55);
+  background: linear-gradient(180deg, rgba(168,85,247,.18), rgba(96,165,250,.08));
+  box-shadow: 0 10px 22px rgba(168,85,247,.10);
+}
+#mode.select:hover{
+  background: linear-gradient(180deg, rgba(168,85,247,.28), rgba(96,165,250,.14));
+  box-shadow: 0 14px 32px rgba(168,85,247,.16);
+}
+
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="card" style="flex: 1 1 auto;">
+    <div class="toolbar">
+      <div style="width:100%;">
+        <div class="title">Tooth Shade Selection (Web)</div>
+        <div class="subtle">Drag to draw hex ROI · Space to Pan · Wheel to Zoom (at cursor)</div>
+      </div>
+
+      <input class="select" type="file" id="file"
+        accept="image/*,.dng,.nef,.cr2,.arw,.rw2,.orf,.raf,.pef,.srw,.3fr,.cr3" />
+
+      <span class="subtle">Mode</span>
+      <select id="mode" class="select">
+        <option value="FA">FA</option>
+        <option value="FR">FR</option>
+        <option value="SA">SA</option>
+        <option value="SR">SR</option>
+      </select>
+
+      <span class="subtle">Trim (active ROI)</span>
+      <span class="subtle">Up</span>
+      <input id="trimLow" class="num" type="number" min="0" max="49" step="0.5" value="0" />
+      <span class="subtle">Down</span>
+      <input id="trimHigh" class="num" type="number" min="0" max="49" step="0.5" value="0" />
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn" id="btnLight">LIGHT</button>
+        <button class="btn" id="btnDark">DARK</button>
+        <button class="btn" id="btnT1">T1</button>
+        <button class="btn" id="btnT2">T2</button>
+        <button class="btn plus" id="btnPlus" title="Add tooth">+</button>
+      </div>
+<button class="btn small fit" id="btnFit">FIT</button>
+      <button class="btn small clear" id="btnClear">CLEAR</button>
+
+      <button class="btn analyze" id="btnAnalyze">ANALYZE</button>
+    </div>
+
+    <div class="chips">
+      <span class="chip info" id="chipStep">Step: -</span>
+      <span class="chip" id="chipZoom">Zoom: 100%</span>
+      <span class="chip" id="chipTrim">Trim: 0 / 0</span>
+      <span class="chip warn" id="chipPan">Pan: OFF</span>
+      <span class="spacer"></span>
+      <span class="chip" id="chipHint">Hint: Upload image.</span>
+    </div>
+
+    <div class="stageWrap" id="stageWrap"></div>
+  </div>
+
+  <div class="card results">
+    <div class="resultsHeader">
+      <h3>Results</h3>
+      <span class="subtle" id="resultsMeta">-</span>
+      <span class="spacer"></span>
+      <button class="btn small" id="btnCopy">Copy JSON</button>
+    </div>
+
+    <div class="grid" id="resultsGrid">
+      <div class="rcard full"><div class="subtle">No analysis yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/vendor/heic2any.js"></script>
+<script type="module">
+import LibRaw from "/static/libraw/index.js";
+const rawDecoder = new LibRaw();
+
+window.__decodeRawFullToBlob = async function(file){
+  const buf = await file.arrayBuffer();
+
+  // FULL decode settings (slower but accurate)
+  await rawDecoder.open(new Uint8Array(buf), {
+    halfSize: false,
+    outputBps: 8,
+    outputColor: 1,
+    useCameraWb: true,
+    noAutoBright: true,
+    userQual: 3
+  });
+
+  const out = await rawDecoder.imageData(); // full decoded pixels :contentReference[oaicite:1]{index=1}
+  const w = out.width || out.w;
+  const h = out.height || out.h;
+  const data = out.data || out;
+
+  // data can be RGB or RGBA
+  let rgba;
+  if(data.length === w*h*4){
+    rgba = new Uint8ClampedArray(data);
+  }else if(data.length === w*h*3){
+    rgba = new Uint8ClampedArray(w*h*4);
+    let j=0;
+    for(let i=0;i<data.length;i+=3){
+      rgba[j++] = data[i];     // R
+      rgba[j++] = data[i+1];   // G
+      rgba[j++] = data[i+2];   // B
+      rgba[j++] = 255;         // A
+    }
+  }else{
+    throw new Error("Unexpected RAW imageData format/size.");
+  }
+
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.putImageData(new ImageData(rgba, w, h), 0, 0);
+
+  return await new Promise((resolve) => c.toBlob(resolve, "image/png", 1.0));
+};
+
+
+function isRawByName(name){
+  name = (name || "").toLowerCase();
+  return /\.(dng|nef|cr2|cr3|arw|rw2|orf|raf|pef|srw|3fr)$/.test(name);
+}
+function isHeifByName(name){
+  name = (name || "").toLowerCase();
+  return /\.(heic|heif)$/.test(name);
+}
+
+async function browserCanRenderImage(blob){
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(true); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+    img.src = url;
+  });
+}
+
+window.__makePreviewBlob = async function(file){
+  // RAW/DNG/... -> decode preview داخل مرورگر (بدون سرور)
+  if (isRawByName(file.name)){
+    const buf = await file.arrayBuffer();
+    await rawDecoder.open(new Uint8Array(buf), { halfSize: true });
+
+    const thumb = await rawDecoder.thumbnailData();
+
+    if (thumb && thumb.data){
+      return new Blob([thumb.data], { type: "image/jpeg" });
+    }
+    if (thumb instanceof Uint8Array){
+      return new Blob([thumb], { type: "image/jpeg" });
+    }
+
+    // اگر thumbnail نداشت، این پیام را می‌دهیم (برای سبک ماندن)
+    throw new Error("RAW preview thumbnail پیدا نشد (ممکنه این فایل thumbnail نداشته باشه).");
+  }
+
+  // HEIC/HEIF -> اگر مرورگر پشتیبانی کرد مستقیم، اگر نه تبدیل داخل مرورگر
+  if (isHeifByName(file.name)){
+    const ok = await browserCanRenderImage(file);
+    if (ok) return file;
+
+    const out = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    if (Array.isArray(out)) return out[0];
+    return out;
+  }
+
+  // JPG/PNG/WebP/... -> مستقیم
+  return file;
+};
+</script>
+<script>
+  Konva.pixelRatio = window.devicePixelRatio || 1;
+
+  const wrap = document.getElementById("stageWrap");
+  const chipStep = document.getElementById("chipStep");
+  const chipZoom = document.getElementById("chipZoom");
+  const chipTrim = document.getElementById("chipTrim");
+  const chipPan  = document.getElementById("chipPan");
+  const chipHint = document.getElementById("chipHint");
+
+  const trimLowEl  = document.getElementById("trimLow");
+  const trimHighEl = document.getElementById("trimHigh");
+
+  const btnLight = document.getElementById("btnLight");
+  const btnDark  = document.getElementById("btnDark");
+  const btnT1    = document.getElementById("btnT1");
+  const btnT2    = document.getElementById("btnT2");
+  const btnPlus  = document.getElementById("btnPlus");
+  const btnFit   = document.getElementById("btnFit");
+  const btnClear = document.getElementById("btnClear");
+const btnAnalyze = document.getElementById("btnAnalyze");
+  const btnCopy = document.getElementById("btnCopy");
+
+  const resultsGrid = document.getElementById("resultsGrid");
+  const resultsMeta = document.getElementById("resultsMeta");
+
+  function wrapSize(){ return { w: wrap.clientWidth, h: wrap.clientHeight }; }
+  let {w: STAGE_W, h: STAGE_H} = wrapSize();
+
+  const stage = new Konva.Stage({ container:"stageWrap", width:STAGE_W, height:STAGE_H, draggable:false });
+  const layerImg = new Konva.Layer();
+  const layerRoi = new Konva.Layer();      // saved hex + labels
+  const layerOverlay = new Konva.Layer();  // preview only
+  stage.add(layerImg);
+  stage.add(layerRoi);
+  stage.add(layerOverlay);
+
+  let imgFile = null;
+  let konvaImageNode = null;
+  let imgW = 0, imgH = 0;
+
+  let spaceDown = false;
+  let step = null;  // "light" | "dark" | "tooth"
+  let activeToothIndex = 0;
+
+  // Per-ROI trims + points in IMAGE coordinates
+  let rois = {
+    light: { pointsImg: null, low_trim: 0, high_trim: 0 },
+    dark:  { pointsImg: null, low_trim: 0, high_trim: 0 },
+    teeth: [
+      { pointsImg: null, low_trim: 0, high_trim: 0 }, // T1
+      { pointsImg: null, low_trim: 0, high_trim: 0 }  // T2
+    ]
+  };
+
+  let lastJson = "";
+
+  // ===== UI helpers =====
+  function setActiveButton(el){
+    // Keep PAN button independent (so it can stay active while selecting LIGHT/DARK/TOOTH)
+    document.querySelectorAll(".toolbar .btn").forEach(b => {
+      if(b) b.classList.remove("active");
+    });
+    if(el && el.id !== "btnPan") el.classList.add("active");
+  }
+
+  function getActiveROI(){
+    if(step==="light") return rois.light;
+    if(step==="dark") return rois.dark;
+    if(step==="tooth") return rois.teeth[activeToothIndex];
+    return null;
+  }
+
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+  function saveTrimToROI(){
+    const r = getActiveROI();
+    if(!r) return;
+    let low = clamp(parseFloat(trimLowEl.value||"0"), 0, 49);
+    let high = clamp(parseFloat(trimHighEl.value||"0"), 0, 49);
+    if(low + high >= 100){ low = 0; high = 0; }
+    r.low_trim = low;
+    r.high_trim = high;
+    updateHUD();
+  }
+
+  function loadTrimFromROI(){
+    const r = getActiveROI();
+    if(!r) return;
+    trimLowEl.value = String(r.low_trim ?? 0);
+    trimHighEl.value = String(r.high_trim ?? 0);
+    updateHUD();
+  }
+
+  trimLowEl.addEventListener("input", saveTrimToROI);
+  trimHighEl.addEventListener("input", saveTrimToROI);
+
+  function setStepLight(){ saveTrimToROI(); step="light"; setActiveButton(btnLight); loadTrimFromROI(); redrawAllROIs(); }
+  function setStepDark(){  saveTrimToROI(); step="dark";  setActiveButton(btnDark);  loadTrimFromROI(); redrawAllROIs(); }
+  function setStepTooth(i){
+    saveTrimToROI();
+    step="tooth"; activeToothIndex=i;
+    const b = document.getElementById("btnT"+(i+1));
+    setActiveButton(b);
+    loadTrimFromROI();
+    redrawAllROIs();
+  }
+
+  function updateHUD(){
+    const stepName = !step ? "-" : (step==="tooth" ? ("TOOTH T"+(activeToothIndex+1)) : step.toUpperCase());
+    chipStep.textContent = "Step: " + stepName;
+    chipZoom.textContent = "Zoom: " + Math.round(stage.scaleX()*100) + "%";
+
+    const r = getActiveROI();
+    chipTrim.textContent = "Trim: " + (r ? (r.low_trim + " / " + r.high_trim) : "0 / 0");
+
+    chipPan.textContent = "Pan: " + (spaceDown ? "ON" : "OFF");
+    chipPan.className = "chip " + (spaceDown ? "good" : "warn");
+
+    chipHint.textContent =
+      !imgFile ? "Hint: Upload image."
+      : (spaceDown ? "Hint: PAN mode (Space). Drag to move." : "Hint: Drag to draw hex ROI. Space = Pan, Wheel = Zoom.");
+  }
+  
+  function setPan(on){
+    spaceDown = !!on;
+    stage.draggable(spaceDown);
+    wrap.style.cursor = spaceDown ? "grab" : "crosshair";
+    updateHUD();
+
+    if(btnPan){
+      btnPan.classList.toggle("active", spaceDown);
+    }
+  }
+
+
+  // ===== Geometry & transforms =====
+  function getStagePoint(){
+    const p = stage.getPointerPosition();
+    if(!p) return null;
+    const t = stage.getAbsoluteTransform().copy();
+    t.invert();
+    return t.point(p);
+  }
+
+  function stageToImage(pt){
+    const ix = konvaImageNode.x(), iy = konvaImageNode.y();
+    const sx = konvaImageNode.scaleX(), sy = konvaImageNode.scaleY();
+    return {
+      x: clamp((pt.x - ix)/sx, 0, imgW),
+      y: clamp((pt.y - iy)/sy, 0, imgH),
+    };
+  }
+
+  function imageToStage(pt){
+    const ix = konvaImageNode.x(), iy = konvaImageNode.y();
+    const sx = konvaImageNode.scaleX(), sy = konvaImageNode.scaleY();
+    return { x: ix + pt.x*sx, y: iy + pt.y*sy };
+  }
+
+  // Hex from drag line: anchor=start corner, end=opposite corner
+  function hexFromAnchorEnd(ax, ay, ex, ey){
+    const dx = ex-ax, dy = ey-ay;
+    const dist = Math.hypot(dx,dy);
+    if(dist < 10) return null;
+    const cx = ax + dx/2, cy = ay + dy/2, r = dist/2;
+    const angle0 = Math.atan2(ay-cy, ax-cx);
+
+    const pts = [];
+    for(let k=0;k<6;k++){
+      const ang = angle0 + k*(Math.PI/3);
+      pts.push([cx + r*Math.cos(ang), cy + r*Math.sin(ang)]);
+    }
+    // force exact anchor/end
+    pts[0] = [ax,ay];
+    pts[3] = [ex,ey];
+    return pts;
+  }
+
+  function makeHex(pointsStage, opacity){
+    return new Konva.Line({
+      points: pointsStage.flat(),
+      closed:true,
+      stroke:"black",
+      strokeWidth:0.8,
+      lineJoin:"round",
+      strokeScaleEnabled:false,
+      shadowForStrokeEnabled:true,
+      shadowColor:"rgba(255,255,255,.65)",
+      shadowBlur:2,
+      opacity: opacity ?? 1
+    });
+  }
+
+  function makeLabel(pointsStage, text, active){
+    const p = pointsStage[1] || pointsStage[0];
+    const color = text.startsWith("T") ? getComputedStyle(document.documentElement).getPropertyValue("--dgreen").trim()
+                                       : getComputedStyle(document.documentElement).getPropertyValue("--navy").trim();
+    return new Konva.Text({
+      text,
+      x: p[0] + 8,
+      y: p[1] + 4,
+      fontSize:13,
+      fontStyle:"bold",
+      fill: color,
+      shadowColor:"rgba(255,255,255,.75)",
+      shadowBlur:2,
+      listening:false,
+      opacity: active ? 1 : 0.65
+    });
+  }
+
+  function redrawAllROIs(){
+    layerRoi.destroyChildren();
+
+    function addSaved(roiObj, label, isActive){
+      if(!roiObj || !roiObj.pointsImg) return;
+      const ptsStage = roiObj.pointsImg.map(p => {
+        const s = imageToStage({x:p[0], y:p[1]});
+        return [s.x, s.y];
+      });
+      layerRoi.add(makeHex(ptsStage, isActive ? 1 : 0.45));
+      layerRoi.add(makeLabel(ptsStage, label, isActive));
+    }
+
+    addSaved(rois.light, "LIGHT", step==="light");
+    addSaved(rois.dark,  "DARK",  step==="dark");
+
+    rois.teeth.forEach((t,i)=>{
+      addSaved(t, "T"+(i+1), step==="tooth" && activeToothIndex===i);
+    });
+
+    layerRoi.draw();
+    updateHUD();
+  }
+
+  // ===== Fit & Zoom & Pan =====
+  function fitImage(){
+    if(!konvaImageNode) return;
+    const s = wrapSize();
+    stage.size({width:s.w, height:s.h});
+
+    const sc = Math.min(s.w / imgW, s.h / imgH);
+    konvaImageNode.scale({x:sc, y:sc});
+    konvaImageNode.position({ x:(s.w - imgW*sc)/2, y:(s.h - imgH*sc)/2 });
+
+    stage.position({x:0,y:0});
+    stage.scale({x:1,y:1});
+    stage.draggable(false);
+    spaceDown = false;
+    wrap.style.cursor = "crosshair";
+
+    stage.draw();
+    redrawAllROIs();
+  }
+
+  // Wheel zoom at cursor (no jumping)
+  /* === TRACKPAD-PAN-TP1 (DO NOT REMOVE) === */
+
+wrap.addEventListener("wheel", (evt)=>{
+  if(!konvaImageNode) return;
+
+  // TRACKPAD / MOUSE WHEEL:
+  // - ctrlKey=true  => pinch-zoom on trackpad (zoom)
+  // - ctrlKey=false => two-finger scroll (pan)
+  evt.preventDefault();
+
+  const oldScale = stage.scaleX();
+
+  if(evt.ctrlKey){
+    // ===== Zoom (at cursor) =====
+    const pointer = stage.getPointerPosition();
+    if(!pointer) return;
+
+    const scaleBy = 1.03;
+    const dir = evt.deltaY > 0 ? -1 : 1;
+    const newScale = dir > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    stage.scale({x:newScale, y:newScale});
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+    stage.position(newPos);
+
+    stage.batchDraw();
+    redrawAllROIs();
+    return;
+  }
+
+  /* === TRACKPAD-PAN-TP2 (DO NOT REMOVE) === */
+/* === TRACKPAD-PAN-TP3B-SMOOTH (DO NOT REMOVE) === */
+// ===== Pan (two-finger scroll on trackpad) - SMOOTH (NO ROI REDRAW) =====
+// ????: ????? ??? ROI ?? ????? ?????? ????? ????. ??? stage ?? ??????? ???????.
+
+  // init state once
+  if(!window.__TP3B){
+    window.__TP3B = { vx:0, vy:0, raf:0 };
+  }
+
+  let dx = evt.deltaX;
+  let dy = evt.deltaY;
+
+  // Shift+scroll => horizontal (??? ???? ???? ????????)
+  if(evt.shiftKey && Math.abs(dx) < 0.5){
+    dx = dy;
+    dy = 0;
+  }
+
+  // boost (???? ?????)
+  const boostX = 1.15;
+  const boostY = 0.80;
+
+  // ??? dx ???? ???? ??? ???? ?????? ??
+  if(Math.abs(dx) < 1.0 && Math.abs(dx) > 0.001){
+    dx = dx * 4.0;
+  }
+
+  // accumulate velocity (opposite to scroll)
+  const st = window.__TP3B;
+  st.vx += (-dx) * boostX;
+  st.vy += (-dy) * boostY;
+
+  if(!st.raf){
+    const damping = 0.74; // 0.65 ??????? 0.78 ???????
+    const minV = 0.28;
+
+    const step = ()=>{
+      stage.position({ x: stage.x() + st.vx, y: stage.y() + st.vy });
+      stage.batchDraw();
+      updateHUD(); // ??? HUD? ?? redrawAllROIs
+
+      st.vx *= damping;
+      st.vy *= damping;
+
+      if(Math.abs(st.vx) < minV && Math.abs(st.vy) < minV){
+        st.vx = 0; st.vy = 0;
+        st.raf = 0;
+        return;
+      }
+      st.raf = requestAnimationFrame(step);
+    };
+
+    st.raf = requestAnimationFrame(step);
+  }
+}, {passive:false});
+// Prevent Space from scrolling page
+  window.addEventListener("keydown", (e)=>{
+    if(e.code==="Space"){
+      e.preventDefault();
+      if(!spaceDown) setPan(true);
+    }
+  }, {passive:false});
+
+  window.addEventListener("keyup", (e)=>{
+    if(e.code==="Space"){
+      e.preventDefault();
+      setPan(false);
+      redrawAllROIs();
+    }
+  }, {passive:false});
+
+  stage.on("dragstart", ()=>{ if(spaceDown) wrap.style.cursor="grabbing"; });
+  stage.on("dragend", ()=>{ if(spaceDown) wrap.style.cursor="grab"; redrawAllROIs(); });
+
+  // ===== Drawing (labels appear AFTER draw only) =====
+  let drawing = false;
+  let anchor = null;
+  let preview = null;
+
+  stage.on("pointerdown", ()=>{
+    if(window.__PINCH_ACTIVE) return;
+if(!imgFile || !konvaImageNode) return;
+    if(spaceDown) return;
+    if(!step) return;
+
+    const p = getStagePoint();
+    if(!p) return;
+
+    // clear current ROI slot before re-draw
+    const r = getActiveROI();
+    if(r) r.pointsImg = null;
+    redrawAllROIs();
+
+    drawing = true;
+    anchor = {x:p.x, y:p.y};
+    if(preview){ preview.destroy(); preview=null; }
+    layerOverlay.draw();
+  });
+
+  stage.on("pointermove", ()=>{
+    if(window.__PINCH_ACTIVE) return;
+if(!drawing || !anchor) return;
+    const p = getStagePoint();
+    if(!p) return;
+
+    const hex = hexFromAnchorEnd(anchor.x, anchor.y, p.x, p.y);
+    if(!hex) return;
+
+    if(preview) preview.destroy();
+    preview = makeHex(hex, 0.7);
+    layerOverlay.add(preview);
+    layerOverlay.batchDraw();
+  });
+
+  stage.on("pointerup", ()=>{
+    if(window.__PINCH_ACTIVE) return;
+if(!drawing || !anchor) return;
+    drawing = false;
+
+    const p = getStagePoint();
+    const hex = p ? hexFromAnchorEnd(anchor.x, anchor.y, p.x, p.y) : null;
+    anchor = null;
+
+    if(preview){ preview.destroy(); preview=null; }
+    layerOverlay.batchDraw();
+
+    if(!hex){ redrawAllROIs(); return; }
+
+    const ptsImg = hex.map(([sx,sy])=>{
+      const q = stageToImage({x:sx, y:sy});
+      return [q.x, q.y];
+    });
+
+    const r = getActiveROI();
+    if(r) r.pointsImg = ptsImg;
+    redrawAllROIs();
+  });
+
+  // ===== Upload =====
+document.getElementById("file").addEventListener("change", async (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+
+  imgFile = f;
+
+  // reset ROIs (keep trims)
+  rois.light.pointsImg = null;
+  rois.dark.pointsImg = null;
+  rois.teeth.forEach(t => t.pointsImg = null);
+
+  resultsGrid.innerHTML = '<div class="rcard full"><div class="subtle">No analysis yet.</div></div>';
+  resultsMeta.textContent = "-";
+  lastJson = "";  let blob;
+  try{
+    blob = await window.__makePreviewBlob(f);
+  }catch(e){
+    alert(e.message || "Preview failed.");
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+const img = new Image();
+  img.onload = ()=>{
+    imgW = img.naturalWidth;
+    imgH = img.naturalHeight;
+
+    layerImg.destroyChildren();
+    konvaImageNode = new Konva.Image({ image: img, x:0, y:0 });
+    layerImg.add(konvaImageNode);
+    layerImg.draw();
+
+    fitImage();
+    setStepLight();
+    updateHUD();
+  };
+  img.src = url;
+});
+
+  // ===== Buttons =====
+btnLight.onclick = ()=> setStepLight();
+  btnDark.onclick  = ()=> setStepDark();
+  btnT1.onclick    = ()=> setStepTooth(0);
+  btnT2.onclick    = ()=> setStepTooth(1);
+
+  // Allow only up to 4 teeth total (T1..T4). + disappears after 4.
+  btnPlus.onclick = ()=>{
+    if(rois.teeth.length >= 4){
+      btnPlus.style.display = "none";
+      return;
+    }
+    // add next tooth
+    rois.teeth.push({ pointsImg:null, low_trim:0, high_trim:0 });
+    const idx = rois.teeth.length - 1;
+
+    // create button
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.id = "btnT"+(idx+1);
+    b.textContent = "T"+(idx+1);
+    b.onclick = ()=> setStepTooth(idx);
+
+    // insert before plus
+    btnPlus.parentNode.insertBefore(b, btnPlus);
+
+    if(rois.teeth.length >= 4) btnPlus.style.display = "none";
+    setStepTooth(idx);
+  };
+
+  btnFit.onclick = ()=> fitImage();
+
+  btnClear.onclick = ()=>{
+    imgFile = null;
+    konvaImageNode = null;
+    imgW = imgH = 0;
+    layerImg.destroyChildren();
+    layerRoi.destroyChildren();
+    layerOverlay.destroyChildren();
+    stage.draw();
+
+    rois.light.pointsImg = null;
+    rois.dark.pointsImg = null;
+    rois.teeth.forEach(t => t.pointsImg = null);
+
+    document.getElementById("file").value = "";
+    step = null;
+    setActiveButton(null);
+
+    resultsGrid.innerHTML = '<div class="rcard full"><div class="subtle">No analysis yet.</div></div>';
+    resultsMeta.textContent = "-";
+    lastJson = "";
+
+    updateHUD();
+  };
+
+  // ===== Results UI =====
+  function fmt(x){
+    if(x===null || x===undefined) return "-";
+    const n = Number(x);
+    if(!Number.isFinite(n)) return String(x);
+    return n.toFixed(2);
+  }
+
+  function labPills(lab, cls=""){
+    return `
+      <div class="labRow ${cls}">
+        <div class="pill"><small>L*</small>${fmt(lab?.[0])}</div>
+        <div class="pill"><small>a*</small>${fmt(lab?.[1])}</div>
+        <div class="pill"><small>b*</small>${fmt(lab?.[2])}</div>
+      </div>
+    `;
+  }
+
+  function renderResults(data){
+    const mode = data?.mode ?? "-";
+    const light = data?.light_lab_raw ?? null;
+    const dark  = data?.dark_lab_raw ?? null;
+    const teeth = data?.teeth ?? [];
+
+    resultsMeta.textContent = `Mode: ${mode} | Teeth: ${teeth.length}`;
+
+    let html = `
+      <div class="rcard">
+        <div class="rcardTitle"><span>Light Reference</span><span class="tag">(0m1)</span></div>
+        ${labPills(light)}
+      </div>
+      <div class="rcard">
+        <div class="rcardTitle"><span>Dark Reference</span><span class="tag">(5m1)</span></div>
+        ${labPills(dark)}
+      </div>
+    `;
+
+    if(!teeth.length){
+      html += `<div class="rcard full"><div class="subtle">No teeth results.</div></div>`;
+    }else{
+      for(const t of teeth){
+        html += `
+          <div class="rcard">
+            <div class="rcardTitle">
+              <span>Tooth ${t.tooth}</span>
+              <span class="tag">Shade: ${t.shade ?? "-"} | ?E00: ${fmt(t.deltaE00)}</span>
+            </div>
+
+            <div class="subtle">LAB (Raw)</div>
+            ${labPills(t.lab_raw)}
+
+            <div class="subtle" style="margin-top:10px;">LAB (Calibrated / Stage4)</div>
+            ${labPills(t.stage4_lab, "cal")}
+          </div>
+        `;
+      }
+    }
+
+    resultsGrid.innerHTML = html;
+  }
+
+  btnCopy.onclick = async ()=>{
+    if(!lastJson) return alert("No JSON yet.");
+    try{
+      await navigator.clipboard.writeText(lastJson);
+      alert("Copied!");
+    }catch(e){
+      alert("Copy failed.");
+    }
+  };
+
+  // ===== Analyze =====
+  btnAnalyze.onclick = async ()=>{
+    saveTrimToROI();
+
+    if(!imgFile) return alert("Upload an image first.");
+    if(!rois.light.pointsImg || !rois.dark.pointsImg) return alert("Need LIGHT and DARK ROI.");
+    const teethSelected = rois.teeth.filter(t => !!t.pointsImg);
+    if(!teethSelected.length) return alert("Select at least one Tooth ROI.");
+
+    const payload = {
+      mode: document.getElementById("mode").value,
+      light: { points: rois.light.pointsImg, low_trim: rois.light.low_trim, high_trim: rois.light.high_trim },
+      dark:  { points: rois.dark.pointsImg,  low_trim: rois.dark.low_trim,  high_trim: rois.dark.high_trim  },
+      teeth: teethSelected.map(t => ({ points: t.pointsImg, low_trim: t.low_trim, high_trim: t.high_trim }))
+    };
+
+    const patchesPayload = await window.__buildAnalyzePatchesPayload(imgFile, payload);
+
+const res = await fetch("/analyze_patches", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(patchesPayload)
+});
+const data = await res.json();
+if(data && data.error){ alert(data.error); return; }
+
+    lastJson = JSON.stringify(data, null, 2);
+    renderResults(data);
+  };
+
+
+
+
+  /* === FIX-MOBILE-SCROLL-RESET (DO NOT REMOVE) === */
+  // Resize (Do NOT reset zoom/pan on mobile scroll)
+  let _lastWrapW = -1, _lastWrapH = -1;
+
+  function resizeStageKeepView(){
+    const s = wrapSize();
+    if(s.w === _lastWrapW && s.h === _lastWrapH) return;
+
+    // keep current zoom/pan
+    const sc = stage.scaleX();
+    const pos = stage.position();
+
+    stage.size({width:s.w, height:s.h});
+    stage.scale({x:sc, y:sc});
+    stage.position(pos);
+
+    stage.batchDraw();
+    redrawAllROIs();
+    updateHUD();
+
+    _lastWrapW = s.w; _lastWrapH = s.h;
+  }
+
+  window.addEventListener("resize", ()=>{
+    // IMPORTANT: do not call fitImage() here
+    resizeStageKeepView();
+  }, {passive:true});
+
+  // Default state
+  setStepLight();
+  updateHUD();
+</script>
+
+
+<script src="/static/vendor/heic2any.js"></script>
+<script type="module">
+import LibRaw from "/static/libraw/index.js";
+const rawDecoder = new LibRaw();
+
+window.__decodeRawFullToBlob = async function(file){
+  const buf = await file.arrayBuffer();
+
+  // FULL decode settings (slower but accurate)
+  await rawDecoder.open(new Uint8Array(buf), {
+    halfSize: false,
+    outputBps: 8,
+    outputColor: 1,
+    useCameraWb: true,
+    noAutoBright: true,
+    userQual: 3
+  });
+
+  const out = await rawDecoder.imageData(); // full decoded pixels :contentReference[oaicite:1]{index=1}
+  const w = out.width || out.w;
+  const h = out.height || out.h;
+  const data = out.data || out;
+
+  // data can be RGB or RGBA
+  let rgba;
+  if(data.length === w*h*4){
+    rgba = new Uint8ClampedArray(data);
+  }else if(data.length === w*h*3){
+    rgba = new Uint8ClampedArray(w*h*4);
+    let j=0;
+    for(let i=0;i<data.length;i+=3){
+      rgba[j++] = data[i];     // R
+      rgba[j++] = data[i+1];   // G
+      rgba[j++] = data[i+2];   // B
+      rgba[j++] = 255;         // A
+    }
+  }else{
+    throw new Error("Unexpected RAW imageData format/size.");
+  }
+
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.putImageData(new ImageData(rgba, w, h), 0, 0);
+
+  return await new Promise((resolve) => c.toBlob(resolve, "image/png", 1.0));
+};
+
+
+function isRawByName(name){
+  name = (name || "").toLowerCase();
+  return /\.(dng|nef|cr2|cr3|arw|rw2|orf|raf|pef|srw|3fr)$/.test(name);
+}
+function isHeifByName(name){
+  name = (name || "").toLowerCase();
+  return /\.(heic|heif)$/.test(name);
+}
+
+async function browserCanRenderImage(blob){
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(true); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+    img.src = url;
+  });
+}
+
+window.__makePreviewBlob = async function(file){
+  // RAW/DNG/... -> decode preview داخل مرورگر (بدون سرور)
+  if (isRawByName(file.name)){
+    const buf = await file.arrayBuffer();
+    await rawDecoder.open(new Uint8Array(buf), { halfSize: true });
+
+    const thumb = await rawDecoder.thumbnailData();
+
+    if (thumb && thumb.data){
+      return new Blob([thumb.data], { type: "image/jpeg" });
+    }
+    if (thumb instanceof Uint8Array){
+      return new Blob([thumb], { type: "image/jpeg" });
+    }
+
+    // اگر thumbnail نداشت، این پیام را می‌دهیم (برای سبک ماندن)
+    throw new Error("RAW preview thumbnail پیدا نشد (ممکنه این فایل thumbnail نداشته باشه).");
+  }
+
+  // HEIC/HEIF -> اگر مرورگر پشتیبانی کرد مستقیم، اگر نه تبدیل داخل مرورگر
+  if (isHeifByName(file.name)){
+    const ok = await browserCanRenderImage(file);
+    if (ok) return file;
+
+    const out = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    if (Array.isArray(out)) return out[0];
+    return out;
+  }
+
+  // JPG/PNG/WebP/... -> مستقیم
+  return file;
+};
+</script>
+<script>
+/* === ZOOM-PATCH-FIX2 (DO NOT REMOVE) === */
+(function(){
+  function addStyleOnce(){
+    if(document.getElementById("zoomOverlayStyle")) return;
+    var st = document.createElement("style");
+    st.id = "zoomOverlayStyle";
+    st.textContent =
+      ".stageOverlayV{position:absolute;top:12px;right:12px;z-index:999999;display:flex;flex-direction:column;gap:10px;pointer-events:auto;}" +
+      ".ovBtnV{border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:11px 12px;font-weight:950;background:rgba(255,255,255,.06);color:rgba(255,255,255,.96);cursor:pointer;user-select:none;box-shadow:0 12px 28px rgba(0,0,0,.25);}" +
+      ".ovBtnV.zoom{width:48px;padding:11px 0;text-align:center;font-size:18px;line-height:18px;border-color:rgba(239,68,68,.78);background:linear-gradient(180deg, rgba(239,68,68,.30), rgba(239,68,68,.14));}" +
+      ".ovBtnV.pan{border-color:rgba(96,165,250,.78);background:linear-gradient(180deg, rgba(96,165,250,.28), rgba(96,165,250,.12));}" +
+      ".ovBtnV:active{transform:translateY(1px);}";
+    document.head.appendChild(st);
+  }
+
+  function ensureOverlay(){
+    var stageWrap = document.getElementById("stageWrap");
+    if(!stageWrap) return false;
+
+    // Make stageWrap position context
+    var cs = window.getComputedStyle(stageWrap);
+    if(cs && cs.position === "static"){
+      stageWrap.style.position = "relative";
+    }
+
+    if(document.getElementById("stageOverlayV")) return true;
+
+    addStyleOnce();
+
+    var ov = document.createElement("div");
+    ov.id = "stageOverlayV";
+    ov.className = "stageOverlayV";
+    ov.innerHTML =
+      '<button type="button" class="ovBtnV pan" id="ovPan">PAN</button>' +
+      '<button type="button" class="ovBtnV zoom" id="ovZoomIn">+</button>' +
+      '<button type="button" class="ovBtnV zoom" id="ovZoomOut">-</button>';
+
+    stageWrap.appendChild(ov);
+    return true;
+  }
+
+  function bindHandlers(){
+    var panBtn  = document.getElementById("ovPan");
+    var zinBtn  = document.getElementById("ovZoomIn");
+    var zoutBtn = document.getElementById("ovZoomOut");
+    if(!panBtn || !zinBtn || !zoutBtn) return;
+
+    function stop(e){ try{ e.preventDefault(); e.stopPropagation(); }catch(_){ } }
+
+    function zoomAtPoint(newScale, point){
+      newScale = Math.max(0.2, Math.min(8, newScale));
+      var oldScale = stage.scaleX();
+      if(Math.abs(newScale - oldScale) < 1e-6) return;
+
+      var wpt = {
+        x: (point.x - stage.x()) / oldScale,
+        y: (point.y - stage.y()) / oldScale
+      };
+
+      stage.scale({x:newScale, y:newScale});
+      stage.position({
+        x: point.x - wpt.x * newScale,
+        y: point.y - wpt.y * newScale
+      });
+
+      stage.batchDraw();
+      redrawAllROIs();
+    }
+
+    function zoomBy(factor){
+      var center = { x: stage.width()/2, y: stage.height()/2 };
+      zoomAtPoint(stage.scaleX() * factor, center);
+    }
+
+    panBtn.addEventListener("pointerdown", stop, {passive:false});
+    zinBtn.addEventListener("pointerdown", stop, {passive:false});
+    zoutBtn.addEventListener("pointerdown", stop, {passive:false});
+
+    panBtn.addEventListener("click", function(e){ stop(e); setPan(!spaceDown); });
+    zinBtn.addEventListener("click", function(e){ stop(e); zoomBy(1.12); });
+    zoutBtn.addEventListener("click", function(e){ stop(e); zoomBy(1/1.12); });
+  }
+
+  window.addEventListener("load", function(){
+    // Try for a few seconds in case stageWrap appears late
+    var n = 0;
+    var t = setInterval(function(){
+      n++;
+      if(ensureOverlay()){
+        // stage + helpers exist now in main script; bind once
+        try{ bindHandlers(); }catch(e){}
+        clearInterval(t);
+      }
+      if(n > 50) clearInterval(t);
+    }, 100);
+  }, {once:true});
+})();
+</script>
+
+<script src="/static/vendor/heic2any.js"></script>
+<script type="module">
+import LibRaw from "/static/libraw/index.js";
+const rawDecoder = new LibRaw();
+
+window.__decodeRawFullToBlob = async function(file){
+  const buf = await file.arrayBuffer();
+
+  // FULL decode settings (slower but accurate)
+  await rawDecoder.open(new Uint8Array(buf), {
+    halfSize: false,
+    outputBps: 8,
+    outputColor: 1,
+    useCameraWb: true,
+    noAutoBright: true,
+    userQual: 3
+  });
+
+  const out = await rawDecoder.imageData(); // full decoded pixels :contentReference[oaicite:1]{index=1}
+  const w = out.width || out.w;
+  const h = out.height || out.h;
+  const data = out.data || out;
+
+  // data can be RGB or RGBA
+  let rgba;
+  if(data.length === w*h*4){
+    rgba = new Uint8ClampedArray(data);
+  }else if(data.length === w*h*3){
+    rgba = new Uint8ClampedArray(w*h*4);
+    let j=0;
+    for(let i=0;i<data.length;i+=3){
+      rgba[j++] = data[i];     // R
+      rgba[j++] = data[i+1];   // G
+      rgba[j++] = data[i+2];   // B
+      rgba[j++] = 255;         // A
+    }
+  }else{
+    throw new Error("Unexpected RAW imageData format/size.");
+  }
+
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.putImageData(new ImageData(rgba, w, h), 0, 0);
+
+  return await new Promise((resolve) => c.toBlob(resolve, "image/png", 1.0));
+};
+
+
+function isRawByName(name){
+  name = (name || "").toLowerCase();
+  return /\.(dng|nef|cr2|cr3|arw|rw2|orf|raf|pef|srw|3fr)$/.test(name);
+}
+function isHeifByName(name){
+  name = (name || "").toLowerCase();
+  return /\.(heic|heif)$/.test(name);
+}
+
+async function browserCanRenderImage(blob){
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(true); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
+    img.src = url;
+  });
+}
+
+window.__makePreviewBlob = async function(file){
+  // RAW/DNG/... -> decode preview داخل مرورگر (بدون سرور)
+  if (isRawByName(file.name)){
+    const buf = await file.arrayBuffer();
+    await rawDecoder.open(new Uint8Array(buf), { halfSize: true });
+
+    const thumb = await rawDecoder.thumbnailData();
+
+    if (thumb && thumb.data){
+      return new Blob([thumb.data], { type: "image/jpeg" });
+    }
+    if (thumb instanceof Uint8Array){
+      return new Blob([thumb], { type: "image/jpeg" });
+    }
+
+    // اگر thumbnail نداشت، این پیام را می‌دهیم (برای سبک ماندن)
+    throw new Error("RAW preview thumbnail پیدا نشد (ممکنه این فایل thumbnail نداشته باشه).");
+  }
+
+  // HEIC/HEIF -> اگر مرورگر پشتیبانی کرد مستقیم، اگر نه تبدیل داخل مرورگر
+  if (isHeifByName(file.name)){
+    const ok = await browserCanRenderImage(file);
+    if (ok) return file;
+
+    const out = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+    if (Array.isArray(out)) return out[0];
+    return out;
+  }
+
+  // JPG/PNG/WebP/... -> مستقیم
+  return file;
+};
+</script>
+<script>
+/* === REAL-PINCH-PAN (DO NOT REMOVE) === */
+(function(){
+
+  window.__PINCH_ACTIVE = false;
+  let pinchActive = false;
+      window.__PINCH_ACTIVE = false;
+  let lastDist = 0;
+  let lastCenter = null;
+
+  function getDistance(t1, t2){
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  function getCenter(t1, t2){
+    return {
+      x: (t1.clientX + t2.clientX) / 2,
+      y: (t1.clientY + t2.clientY) / 2
+    };
+  }
+
+  wrap.addEventListener("touchstart", function(e){
+    if(e.touches.length === 2){
+      pinchActive = true;
+      window.__PINCH_ACTIVE = true;
+      stage.draggable(false); // disable normal drag
+      lastDist = getDistance(e.touches[0], e.touches[1]);
+      lastCenter = getCenter(e.touches[0], e.touches[1]);
+    }
+  }, {passive:false});
+
+  wrap.addEventListener("touchmove", function(e){
+    if(!pinchActive) return;
+    if(e.touches.length !== 2) return;
+
+    e.preventDefault();
+
+    const dist = getDistance(e.touches[0], e.touches[1]);
+    const center = getCenter(e.touches[0], e.touches[1]);
+
+    const scale = stage.scaleX();
+    const scaleFactor = dist / lastDist;
+    const newScale = Math.max(0.2, Math.min(8, scale * scaleFactor));
+
+    const rect = wrap.getBoundingClientRect();
+    const point = {
+      x: center.x - rect.left,
+      y: center.y - rect.top
+    };
+
+    const mousePointTo = {
+      x: (point.x - stage.x()) / scale,
+      y: (point.y - stage.y()) / scale
+    };
+
+    stage.scale({x:newScale, y:newScale});
+
+    const newPos = {
+      x: point.x - mousePointTo.x * newScale,
+      y: point.y - mousePointTo.y * newScale
+    };
+
+    // -------- PAN PART --------
+    const dx = center.x - lastCenter.x;
+    const dy = center.y - lastCenter.y;
+
+    stage.position({
+      x: newPos.x + dx,
+      y: newPos.y + dy
+    });
+
+    stage.batchDraw();
+    redrawAllROIs();
+
+    lastDist = dist;
+    lastCenter = center;
+
+  }, {passive:false});
+
+  wrap.addEventListener("touchend", function(e){
+    if(e.touches.length < 2){
+      pinchActive = false;
+      window.__PINCH_ACTIVE = false;
+      lastDist = 0;
+      lastCenter = null;
+    }
+  });
+
+})();
+</script>
+<script>
+/* === CLIENT_ROI_PATCH_MODE (DO NOT REMOVE) === */
+(function(){
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+  function b64FromU8(u8){
+    let s = "";
+    const CH = 0x8000;
+    for(let i=0;i<u8.length;i+=CH){
+      s += String.fromCharCode.apply(null, u8.subarray(i, i+CH));
+    }
+    return btoa(s);
+  }
+
+  function bboxFromPoints(pts, W, H, pad){
+    let minx=1e9, miny=1e9, maxx=-1e9, maxy=-1e9;
+    for(const [x,y] of pts){
+      if(x<minx) minx=x; if(y<miny) miny=y;
+      if(x>maxx) maxx=x; if(y>maxy) maxy=y;
+    }
+    minx = Math.floor(minx - pad); miny = Math.floor(miny - pad);
+    maxx = Math.ceil(maxx + pad);  maxy = Math.ceil(maxy + pad);
+    minx = clamp(minx, 0, W-1); miny = clamp(miny, 0, H-1);
+    maxx = clamp(maxx, 0, W-1); maxy = clamp(maxy, 0, H-1);
+    const w = Math.max(1, maxx - minx + 1);
+    const h = Math.max(1, maxy - miny + 1);
+    return {x:minx, y:miny, w, h};
+  }
+
+  let __FULL = null; // cached decoded canvas for current file
+
+  async function decodeToCanvasFromBlob(blob){
+    const bmp = await createImageBitmap(blob);
+    const c = document.createElement("canvas");
+    c.width = bmp.width; c.height = bmp.height;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(bmp, 0, 0);
+    return { w:bmp.width, h:bmp.height, canvas:c, ctx };
+  }
+
+  async function ensureFullDecoded(imgFile){
+    if(__FULL && __FULL._name === (imgFile?.name||"") && __FULL._size === (imgFile?.size||0)) return __FULL;
+    if(!window.__makePreviewBlob) throw new Error("Preview helper missing.");
+
+    // IMPORTANT:
+    // For RAW: your module preview code must be set to FULL decode for analysis (we will patch it next step).
+    const name = (imgFile && imgFile.name ? imgFile.name.toLowerCase() : "");
+const isRaw = /\.(dng|nef|cr2|cr3|arw|rw2|orf|raf|pef|srw|3fr)$/.test(name);
+
+let blob;
+if(isRaw){
+  if(!window.__decodeRawFullToBlob) throw new Error("Full RAW decoder missing.");
+  blob = await window.__decodeRawFullToBlob(imgFile);
+}else{
+  blob = await window.__makePreviewBlob(imgFile);
+}
+    const full = await decodeToCanvasFromBlob(blob);
+    full._name = imgFile?.name||"";
+    full._size = imgFile?.size||0;
+    __FULL = full;
+    return __FULL;
+  }
+
+  function roiPatch(full, ptsImg, padPx){
+    const bb = bboxFromPoints(ptsImg, full.w, full.h, padPx);
+    const id = full.ctx.getImageData(bb.x, bb.y, bb.w, bb.h);
+    const rgba = id.data;
+
+    // RGBA -> BGR bytes
+    const bgr = new Uint8Array(bb.w * bb.h * 3);
+    let j=0;
+    for(let i=0;i<rgba.length;i+=4){
+      const r = rgba[i], g = rgba[i+1], b = rgba[i+2];
+      bgr[j++] = b; bgr[j++] = g; bgr[j++] = r;
+    }
+    const relPts = ptsImg.map(([x,y]) => [x - bb.x, y - bb.y]);
+    return { w:bb.w, h:bb.h, points: relPts, bgr_b64: b64FromU8(bgr) };
+  }
+
+  window.__buildAnalyzePatchesPayload = async function(imgFile, payload){
+    const full = await ensureFullDecoded(imgFile);
+
+    // padding so server erosion doesn't hit bbox border
+    const PAD = 12;
+
+    const lightPatch = roiPatch(full, payload.light.points, PAD);
+    lightPatch.low_trim = payload.light.low_trim;
+    lightPatch.high_trim = payload.light.high_trim;
+
+    const darkPatch = roiPatch(full, payload.dark.points, PAD);
+    darkPatch.low_trim = payload.dark.low_trim;
+    darkPatch.high_trim = payload.dark.high_trim;
+
+    const teethPatches = payload.teeth.map(t => {
+      const p = roiPatch(full, t.points, PAD);
+      p.low_trim = t.low_trim;
+      p.high_trim = t.high_trim;
+      return p;
+    });
+
+    return { mode: payload.mode, light: lightPatch, dark: darkPatch, teeth: teethPatches };
+  };
+})();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
