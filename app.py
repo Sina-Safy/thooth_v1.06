@@ -1,6 +1,7 @@
 ﻿from fastapi import FastAPI, UploadFile, File, Form, Body
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+import mimetypes
 import numpy as np
 import cv2
 import json
@@ -10,6 +11,11 @@ import base64
 from core_stub import analyze_image_with_rois
 
 app = FastAPI()
+
+# Ensure correct MIME types for modules + wasm (Render/Linux)
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("application/javascript", ".mjs")
+mimetypes.add_type("application/wasm", ".wasm")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -132,4 +138,6 @@ async def analyze_patches(payload: dict = Body(...)):
 
     except Exception as e:
         return JSONResponse({"error": f"analyze_patches failed: {str(e)}"}, status_code=400)
+
+
 
