@@ -222,3 +222,92 @@ async def analyze_patches_png(
         return JSONResponse({"error": f"analyze_patches_png failed: {str(e)}"}, status_code=400)
 
 
+
+# ============================================================
+# Binary RGBA patches endpoint (fastest CPU on mobile)
+# Client sends raw RGBA bytes for Light/Dark/Teeth via multipart/form-data
+# ============================================================
+def _rgba_bytes_to_bgr(rgba_bytes: bytes, w: int, h: int):
+    arr = np.frombuffer(rgba_bytes, dtype=np.uint8)
+    expected = w * h * 4
+    if arr.size != expected:
+        raise ValueError(f"RGBA size mismatch: got {arr.size}, expected {expected} (w={w}, h={h})")
+    arr = arr.reshape((h, w, 4))  # RGBA
+    bgr = arr[:, :, :3][:, :, ::-1].copy()  # BGR
+    return bgr
+
+@app.post("/analyze_patches_bin")
+async def analyze_patches_bin(
+    payload: str = Form(...),
+    light: UploadFile = File(...),
+    dark: UploadFile = File(...),
+    teeth: List[UploadFile] = File([])
+):
+    """
+    payload JSON includes (same order as files):
+      mode
+      light: {points, low_trim, high_trim, w, h, fmt:"RGBA"}
+      dark:  {points, low_trim, high_trim, w, h, fmt:"RGBA"}
+      teeth: [{points, low_trim, high_trim, w, h, fmt:"RGBA"}, ...]
+    files:
+      light: raw RGBA bytes (application/octet-stream)
+      dark:  raw RGBA bytes
+      teeth: repeated field name, each raw RGBA bytes
+    """
+    try:
+        meta = json.loads(payload)
+
+        # read bytes
+        light_bytes = await light.read()
+        dark_bytes  = await dark.read()
+
+        Lm = meta["light"]
+        Dm = meta["dark"]
+
+        light_bgr = _rgba_bytes_to_bgr(light_bytes, int(Lm["w"]), int(Lm["h"]))
+        dark_bgr  = _rgba_bytes_to_bgr(dark_bytes,  int(Dm["w"]), int(Dm["h"]))
+
+        teeth_files = teeth or []
+        teeth_meta  = meta.get("teeth", []) or []
+
+        teeth_bgr_list = []
+        for i, f in enumerate(teeth_files):
+            if i >= len(teeth_meta):
+                break
+            tb = await f.read()
+            tm = teeth_meta[i]
+            teeth_bgr_list.append(_rgba_bytes_to_bgr(tb, int(tm["w"]), int(tm["h"])))
+
+        patch_payload = {
+            "mode": meta.get("mode", "fa"),
+            "light": {
+                "points": Lm["points"],
+                "low_trim": Lm.get("low_trim", 0),
+                "high_trim": Lm.get("high_trim", 0),
+                "img_bgr": light_bgr
+            },
+            "dark": {
+                "points": Dm["points"],
+                "low_trim": Dm.get("low_trim", 0),
+                "high_trim": Dm.get("high_trim", 0),
+                "img_bgr": dark_bgr
+            },
+            "teeth": []
+        }
+
+        for i, tm in enumerate(teeth_meta):
+            if i >= len(teeth_bgr_list):
+                break
+            patch_payload["teeth"].append({
+                "points": tm["points"],
+                "low_trim": tm.get("low_trim", 0),
+                "high_trim": tm.get("high_trim", 0),
+                "img_bgr": teeth_bgr_list[i]
+            })
+
+        from core_stub import analyze_patches_with_rois
+        return analyze_patches_with_rois(patch_payload)
+
+    except Exception as e:
+        return JSONResponse({"error": f"analyze_patches_bin failed: {str(e)}"}, status_code=400)
+

@@ -1108,12 +1108,11 @@ btnLight.onclick = ()=> setStepLight();
       teeth: teethSelected.map(t => ({ points: t.pointsImg, low_trim: t.low_trim, high_trim: t.high_trim }))
     };
 
-    const patchesPayload = await window.__buildAnalyzePatchesPayload(imgFile, payload);
+    const fd = await window.__buildAnalyzeBinFormData(imgFile, payload);
 
-const res = await fetch("/analyze_patches", {
+const res = await fetch("/analyze_patches_bin", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(patchesPayload)
+  body: fd
 });
 const data = await res.json();
 if(data && data.error){ alert(data.error); return; }
@@ -1657,8 +1656,198 @@ if(isRaw){
   };
 })();
 </script>
+<script>
+/* === CLIENT_ROI_PNG_MODE (DO NOT REMOVE) === */
+(function(){
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+  function bboxFromPoints(pts, W, H, pad){
+    let minx=1e9, miny=1e9, maxx=-1e9, maxy=-1e9;
+    for(const [x,y] of pts){
+      if(x<minx) minx=x; if(y<miny) miny=y;
+      if(x>maxx) maxx=x; if(y>maxy) maxy=y;
+    }
+    minx = Math.floor(minx - pad); miny = Math.floor(miny - pad);
+    maxx = Math.ceil(maxx + pad);  maxy = Math.ceil(maxy + pad);
+    minx = clamp(minx, 0, W-1); miny = clamp(miny, 0, H-1);
+    maxx = clamp(maxx, 0, W-1); maxy = clamp(maxy, 0, H-1);
+    const w = Math.max(1, maxx - minx + 1);
+    const h = Math.max(1, maxy - miny + 1);
+    return {x:minx, y:miny, w, h};
+  }
+
+  function canvasToBlob(c, type){
+    return new Promise((resolve)=> c.toBlob(resolve, type || "image/png", 1.0));
+  }
+
+  // We reuse the cached decoded canvas created by CLIENT_ROI_PATCH_MODE if it exists.
+  // If not, we build our own minimal decoder (but in your project it should already exist).
+  async function getFullCanvas(imgFile){
+    // Prefer existing cached full decode from earlier helper
+    if(window.__buildAnalyzePatchesPayload && window.__FULL_CANVAS_CACHE){
+      return window.__FULL_CANVAS_CACHE;
+    }
+
+    // Fallback: use existing logic in your page (preview blob -> createImageBitmap)
+    if(!window.__makePreviewBlob) throw new Error("__makePreviewBlob missing.");
+    let blob = await window.__makePreviewBlob(imgFile);
+    const bmp = await createImageBitmap(blob);
+    const c = document.createElement("canvas");
+    c.width = bmp.width; c.height = bmp.height;
+    const ctx = c.getContext("2d", { willReadFrequently: false });
+    ctx.drawImage(bmp, 0, 0);
+    return { canvas:c, ctx, w:bmp.width, h:bmp.height };
+  }
+
+  async function cropPngFromFull(full, ptsImg, pad){
+    const bb = bboxFromPoints(ptsImg, full.w, full.h, pad);
+    const c = document.createElement("canvas");
+    c.width = bb.w; c.height = bb.h;
+    const ctx = c.getContext("2d", { willReadFrequently: false });
+
+    // drawImage crop: (sx,sy,sw,sh) -> (dx,dy,dw,dh)
+    ctx.drawImage(full.canvas, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h);
+
+    const blob = await canvasToBlob(c, "image/png"); // LOSSLESS
+    const relPts = ptsImg.map(([x,y]) => [x - bb.x, y - bb.y]);
+    return { blob, relPts };
+  }
+
+  window.__buildAnalyzePngFormData = async function(imgFile, payload){
+    const PAD = 12;
+    const full = await getFullCanvas(imgFile);
+
+    // Light
+    const L = await cropPngFromFull(full, payload.light.points, PAD);
+    // Dark
+    const D = await cropPngFromFull(full, payload.dark.points, PAD);
+
+    // Teeth
+    const teethOut = [];
+    for(const t of payload.teeth){
+      teethOut.push(await cropPngFromFull(full, t.points, PAD));
+    }
+
+    const meta = {
+      mode: payload.mode,
+      light: { points: L.relPts, low_trim: payload.light.low_trim, high_trim: payload.light.high_trim },
+      dark:  { points: D.relPts, low_trim: payload.dark.low_trim, high_trim: payload.dark.high_trim },
+      teeth: payload.teeth.map((t, i)=> ({
+        points: teethOut[i].relPts,
+        low_trim: t.low_trim,
+        high_trim: t.high_trim
+      }))
+    };
+
+    const fd = new FormData();
+    fd.append("payload", JSON.stringify(meta));
+    fd.append("light", L.blob, "light.png");
+    fd.append("dark",  D.blob, "dark.png");
+
+    for(let i=0;i<teethOut.length;i++){
+      fd.append("teeth", teethOut[i].blob, `tooth_${i+1}.png`);
+    }
+
+    return fd;
+  };
+})();
+</script>
+<script>
+/* === CLIENT_ROI_BIN_MODE (DO NOT REMOVE) === */
+(function(){
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+  function bboxFromPoints(pts, W, H, pad){
+    let minx=1e9, miny=1e9, maxx=-1e9, maxy=-1e9;
+    for(const [x,y] of pts){
+      if(x<minx) minx=x; if(y<miny) miny=y;
+      if(x>maxx) maxx=x; if(y>maxy) maxy=y;
+    }
+    minx = Math.floor(minx - pad); miny = Math.floor(miny - pad);
+    maxx = Math.ceil(maxx + pad);  maxy = Math.ceil(maxy + pad);
+    minx = clamp(minx, 0, W-1); miny = clamp(miny, 0, H-1);
+    maxx = clamp(maxx, 0, W-1); maxy = clamp(maxy, 0, H-1);
+    const w = Math.max(1, maxx - minx + 1);
+    const h = Math.max(1, maxy - miny + 1);
+    return {x:minx, y:miny, w, h};
+  }
+
+  async function getFullCanvas(imgFile){
+    // Prefer existing cached full decode from your earlier helper if available
+    if(window.__FULL_CANVAS_CACHE && window.__FULL_CANVAS_CACHE.canvas){
+      return window.__FULL_CANVAS_CACHE;
+    }
+
+    // Fallback: use preview blob -> bitmap -> canvas (works for normal & RAW preview)
+    if(!window.__makePreviewBlob) throw new Error("__makePreviewBlob missing.");
+    const blob = await window.__makePreviewBlob(imgFile);
+    const bmp = await createImageBitmap(blob);
+    const c = document.createElement("canvas");
+    c.width = bmp.width; c.height = bmp.height;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(bmp, 0, 0);
+    return { canvas:c, ctx, w:bmp.width, h:bmp.height };
+  }
+
+  function cropRgbaBytes(full, ptsImg, pad){
+    const bb = bboxFromPoints(ptsImg, full.w, full.h, pad);
+
+    // Read RGBA bytes directly (NO loops, NO PNG)
+    const imgData = full.ctx.getImageData(bb.x, bb.y, bb.w, bb.h);
+    const rgba = imgData.data; // Uint8ClampedArray (RGBA)
+
+    // Blob from typed array (raw bytes)
+    const blob = new Blob([rgba], { type: "application/octet-stream" });
+
+    const relPts = ptsImg.map(([x,y]) => [x - bb.x, y - bb.y]);
+    return { blob, relPts, w: bb.w, h: bb.h };
+  }
+
+  window.__buildAnalyzeBinFormData = async function(imgFile, payload){
+    const PAD = 12;
+    const full = await getFullCanvas(imgFile);
+
+    const L = cropRgbaBytes(full, payload.light.points, PAD);
+    const D = cropRgbaBytes(full, payload.dark.points, PAD);
+
+    const teethOut = [];
+    for(const t of payload.teeth){
+      teethOut.push(cropRgbaBytes(full, t.points, PAD));
+    }
+
+    const meta = {
+      mode: payload.mode,
+      light: { points: L.relPts, low_trim: payload.light.low_trim, high_trim: payload.light.high_trim, w: L.w, h: L.h, fmt: "RGBA" },
+      dark:  { points: D.relPts, low_trim: payload.dark.low_trim, high_trim: payload.dark.high_trim, w: D.w, h: D.h, fmt: "RGBA" },
+      teeth: payload.teeth.map((t, i)=> ({
+        points: teethOut[i].relPts,
+        low_trim: t.low_trim,
+        high_trim: t.high_trim,
+        w: teethOut[i].w,
+        h: teethOut[i].h,
+        fmt: "RGBA"
+      }))
+    };
+
+    const fd = new FormData();
+    fd.append("payload", JSON.stringify(meta));
+    fd.append("light", L.blob, "light.rgba");
+    fd.append("dark",  D.blob, "dark.rgba");
+
+    for(let i=0;i<teethOut.length;i++){
+      fd.append("teeth", teethOut[i].blob, `tooth_${i+1}.rgba`);
+    }
+
+    return fd;
+  };
+})();
+</script>
 </body>
 </html>
+
+
+
+
 
 
 
