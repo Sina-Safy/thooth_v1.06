@@ -1,4 +1,5 @@
 ﻿from fastapi import FastAPI, UploadFile, File, Form, Body
+from typing import List
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 import mimetypes
@@ -139,5 +140,85 @@ async def analyze_patches(payload: dict = Body(...)):
     except Exception as e:
         return JSONResponse({"error": f"analyze_patches failed: {str(e)}"}, status_code=400)
 
+
+
+
+# ============================================================
+# PNG lossless patches endpoint (fast on mobile)
+# Client sends small PNG crops for Light/Dark/Teeth via multipart/form-data
+# ============================================================
+def _decode_png_to_bgr(png_bytes: bytes):
+    npbuf = np.frombuffer(png_bytes, dtype=np.uint8)
+    img = cv2.imdecode(npbuf, cv2.IMREAD_COLOR)  # BGR
+    if img is None:
+        raise ValueError("cv2.imdecode failed for PNG patch.")
+    return img
+
+@app.post("/analyze_patches_png")
+async def analyze_patches_png(
+    payload: str = Form(...),
+    light: UploadFile = File(...),
+    dark: UploadFile = File(...),
+    teeth: List[UploadFile] = File([])
+):
+    """
+    payload JSON includes:
+      mode
+      light: {points, low_trim, high_trim}
+      dark:  {points, low_trim, high_trim}
+      teeth: [{points, low_trim, high_trim}, ...]  (same order as files)
+    files:
+      light: PNG
+      dark: PNG
+      teeth: repeated field name (0..N files), each PNG
+    """
+    try:
+        meta = json.loads(payload)
+
+        light_png = await light.read()
+        dark_png  = await dark.read()
+
+        light_bgr = _decode_png_to_bgr(light_png)
+        dark_bgr  = _decode_png_to_bgr(dark_png)
+
+        teeth_bgr_list = []
+        for f in (teeth or []):
+            teeth_bgr_list.append(_decode_png_to_bgr(await f.read()))
+
+        # build structure expected by core_stub.analyze_patches_with_rois
+        patch_payload = {
+            "mode": meta.get("mode", "fa"),
+            "light": {
+                "points": meta["light"]["points"],
+                "low_trim": meta["light"].get("low_trim", 0),
+                "high_trim": meta["light"].get("high_trim", 0),
+                "img_bgr": light_bgr
+            },
+            "dark": {
+                "points": meta["dark"]["points"],
+                "low_trim": meta["dark"].get("low_trim", 0),
+                "high_trim": meta["dark"].get("high_trim", 0),
+                "img_bgr": dark_bgr
+            },
+            "teeth": []
+        }
+
+        teeth_meta = meta.get("teeth", []) or []
+        # match by index
+        for i, tmeta in enumerate(teeth_meta):
+            if i >= len(teeth_bgr_list):
+                break
+            patch_payload["teeth"].append({
+                "points": tmeta["points"],
+                "low_trim": tmeta.get("low_trim", 0),
+                "high_trim": tmeta.get("high_trim", 0),
+                "img_bgr": teeth_bgr_list[i]
+            })
+
+        from core_stub import analyze_patches_with_rois
+        return analyze_patches_with_rois(patch_payload)
+
+    except Exception as e:
+        return JSONResponse({"error": f"analyze_patches_png failed: {str(e)}"}, status_code=400)
 
 
